@@ -156,8 +156,8 @@ For automatic data updates every 3 hours:
 1. **Add secrets to your repository**:
    - Go to Settings → Secrets and variables → Actions
    - Add the following secrets:
-     - `API_ID`: Your Telegram API ID
-     - `API_HASH`: Your Telegram API Hash
+     - `TELEGRAM_API_ID`: Your Telegram API ID
+     - `TELEGRAM_API_HASH`: Your Telegram API Hash
      - `TELEGRAM_SESSION_BASE64`: Your session file (base64 encoded)
 
 2. **The regular workflow will automatically**:

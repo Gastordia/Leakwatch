@@ -48,6 +48,16 @@ monitoring:
 
 # Data Quality
 quality:
+  allowed_breach_types:
+    - Data leak
+    - Security breach
+    - Privacy violation
+    - Ransomware
+    - Malware
+    - Phishing
+    - DDoS
+    - Other
+  
   breach_indicators:
     - leak
     - breach

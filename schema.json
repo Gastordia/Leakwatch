@@ -31,7 +31,7 @@
       "Type": {
         "type": "string",
         "description": "Type of breach",
-        "enum": ["Data leak", "Security breach", "Privacy violation", "Other"]
+        "enum": ["Data leak", "Security breach", "Privacy violation", "Ransomware", "Malware", "Phishing", "DDoS", "Other"]
       },
       "message_id": {
         "type": "integer",

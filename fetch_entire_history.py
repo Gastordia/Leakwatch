@@ -34,6 +34,12 @@ SECURE_FILE_PERMISSIONS = 0o600
 MAX_CONTENT_LENGTH = 2000
 MAX_SOURCE_LENGTH = 500
 
+# Allowed breach types
+ALLOWED_BREACH_TYPES = [
+    "Data leak", "Security breach", "Privacy violation", 
+    "Ransomware", "Malware", "Phishing", "DDoS", "Other"
+]
+
 # Relevance filters
 BREACH_INDICATORS = [
     'leak', 'breach', 'hack', 'compromise', 'exposed', 'stolen', 'database',
@@ -198,6 +204,10 @@ class FullHistoryFetcher:
                                     parsed[key] = value[:MAX_CONTENT_LENGTH]
                                 elif key == 'Source' and len(value) > MAX_SOURCE_LENGTH:
                                     parsed[key] = value[:MAX_SOURCE_LENGTH]
+                                elif key == 'Type':
+                                    # Validate breach type
+                                    if value not in ALLOWED_BREACH_TYPES:
+                                        parsed[key] = "Other"
                         
                         # Check relevance
                         if self.is_relevant_breach(parsed.get('Content', '')):
@@ -220,6 +230,9 @@ class FullHistoryFetcher:
         """Fetch entire channel history"""
         if not self.api_id or not self.api_hash:
             logger.error("API_ID and API_HASH environment variables are required")
+            logger.error(f"API_ID: {'SET' if self.api_id else 'MISSING'}")
+            logger.error(f"API_HASH: {'SET' if self.api_hash else 'MISSING'}")
+            logger.error(f"SESSION_BASE64: {'SET' if self.session_base64 else 'MISSING'}")
             return []
         
         if not self.session_base64:

@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -56,8 +58,8 @@ jobs:
         
     - name: Fetch Telegram data
       env:
-        API_ID: ${{ secrets.API_ID }}
-        API_HASH: ${{ secrets.API_HASH }}
+        API_ID: ${{ secrets.TELEGRAM_API_ID }}
+        API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
         TELEGRAM_SESSION_BASE64: ${{ secrets.TELEGRAM_SESSION_BASE64 }}
         CHANNEL: breachdetector
         MESSAGE_LIMIT: 5000

@@ -24,7 +24,7 @@ import yaml
 SECURE_FILE_PERMISSIONS = 0o600
 MAX_CONTENT_LENGTH = 2000
 MAX_SOURCE_LENGTH = 500
-ALLOWED_BREACH_TYPES = ["Data leak", "Security breach", "Privacy violation", "Other"]
+ALLOWED_BREACH_TYPES = ["Data leak", "Security breach", "Privacy violation", "Ransomware", "Malware", "Phishing", "DDoS", "Other"]
 
 # Enhanced logging configuration
 logging.basicConfig(

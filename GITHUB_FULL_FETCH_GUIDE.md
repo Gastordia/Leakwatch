@@ -25,8 +25,8 @@ The full history fetch will:
 Make sure you have these secrets in your repository:
 - Go to **Settings** → **Secrets and variables** → **Actions**
 - Verify these secrets exist:
-  - `API_ID`
-  - `API_HASH` 
+  - `TELEGRAM_API_ID`
+  - `TELEGRAM_API_HASH` 
   - `TELEGRAM_SESSION_BASE64`
 
 ### 2. Run the Workflow
