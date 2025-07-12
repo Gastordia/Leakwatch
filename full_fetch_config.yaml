@@ -1,0 +1,111 @@
+# Full History Fetch Configuration
+# This is a one-time configuration for fetching entire channel history
+
+telegram:
+  channel: breachdetector
+  # No message limit - fetch everything
+  message_limit: null
+
+# Filtering Configuration
+filtering:
+  # Only process JSON messages
+  json_only: true
+  
+  # Relevance scoring
+  min_breach_score: 1
+  max_spam_score: 2
+  
+  # Content validation
+  min_content_length: 10
+  max_content_length: 2000
+
+# Data Processing
+processing:
+  # Remove duplicates
+  deduplicate: true
+  
+  # Sort by timestamp
+  sort_by_timestamp: true
+  
+  # Create backup
+  create_backup: true
+  
+  # Backup filename pattern
+  backup_pattern: "data_backup_full_history_{timestamp}.json"
+
+# Logging
+logging:
+  level: INFO
+  file: full_history_fetch.log
+  console_output: true
+
+# Security
+security:
+  secure_file_permissions: true
+  input_validation: true
+  session_cleanup: true
+
+# Relevance Keywords
+breach_indicators:
+  - leak
+  - breach
+  - hack
+  - compromise
+  - exposed
+  - stolen
+  - database
+  - credentials
+  - password
+  - email
+  - personal data
+  - user data
+  - customer data
+  - financial data
+  - credit card
+  - ssn
+  - social security
+  - dump
+  - records
+  - accounts
+  - users
+  - customers
+  - financial
+  - banking
+  - payment
+  - transaction
+  - identity
+  - personal
+  - address
+  - phone
+  - dob
+  - date of birth
+  - national id
+  - passport
+
+spam_indicators:
+  - buy
+  - sell
+  - offer
+  - discount
+  - promotion
+  - service
+  - tool
+  - software
+  - review
+  - rating
+  - backlink
+  - seo
+  - marketing
+  - advertisement
+  - sponsored
+  - deal
+  - sale
+  - free trial
+  - subscribe
+  - join
+  - telegram.me
+  - t.me
+  - channel
+  - group
+  - bot
+  - premium 

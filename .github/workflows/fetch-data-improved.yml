@@ -1,0 +1,143 @@
+name: Enhanced Data Fetch
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'  # Every 3 hours
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main ]
+    paths:
+      - 'fetch_secure_session_improved.py'
+      - 'config.yaml'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent hanging workflows
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements_improved.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements_improved.txt
+        
+    - name: Run security audit
+      run: |
+        python security_audit.py || echo "Security audit completed with warnings"
+        
+    - name: Validate configuration
+      run: |
+        python -c "
+        import yaml
+        import os
+        with open('config.yaml', 'r') as f:
+            config = yaml.safe_load(f)
+        print('✅ Configuration validated')
+        "
+        
+    - name: Fetch Telegram data
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        API_HASH: ${{ secrets.API_HASH }}
+        TELEGRAM_SESSION_BASE64: ${{ secrets.TELEGRAM_SESSION_BASE64 }}
+        CHANNEL: breachdetector
+        MESSAGE_LIMIT: 5000
+        BACKUP_ENABLED: true
+        RETRY_ATTEMPTS: 3
+        RETRY_DELAY_SECONDS: 60
+      run: |
+        python fetch_secure_session_improved.py
+        
+    - name: Validate data structure
+      run: |
+        python -c "
+        import json
+        import jsonschema
+        from jsonschema import validate
+        
+        # Load schema
+        with open('schema.json', 'r') as f:
+            schema = json.load(f)
+            
+        # Load data
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+            
+        # Validate
+        validate(instance=data, schema=schema)
+        print(f'✅ Data validated: {len(data)} records')
+        "
+        
+    - name: Check for changes
+      id: changes
+      run: |
+        if git diff --quiet data.json; then
+          echo "no_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "no_changes=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Commit and push changes
+      if: steps.changes.outputs.no_changes == 'false'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data.json
+        git commit -m "Update breach data [skip ci]"
+        git push
+        
+    - name: Create backup
+      if: steps.changes.outputs.no_changes == 'false'
+      run: |
+        cp data.json "data_backup_$(date +%Y%m%d_%H%M%S).json"
+        
+    - name: Cleanup old backups
+      run: |
+        find . -name "data_backup_*.json" -mtime +7 -delete
+        
+    - name: Upload logs
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: fetch-logs
+        path: |
+          telegram_fetcher.log
+          data_backup_*.json
+        retention-days: 7
+        
+    - name: Notify on failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+    - name: Notify on success
+      if: success() && steps.changes.outputs.no_changes == 'false'
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

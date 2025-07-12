@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Breach Data Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["Content", "Source", "Type"],
+    "properties": {
+      "Source": {
+        "type": "string",
+        "description": "Source of the breach information",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "Content": {
+        "type": "string",
+        "description": "Description of the breach",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "author": {
+        "type": "string",
+        "description": "Author of the post",
+        "maxLength": 100
+      },
+      "Detection Date": {
+        "type": "string",
+        "description": "Date when breach was detected",
+        "pattern": "^\\d{1,2} [A-Za-z]{3} \\d{4}$"
+      },
+      "Type": {
+        "type": "string",
+        "description": "Type of breach",
+        "enum": ["Data leak", "Security breach", "Privacy violation", "Other"]
+      },
+      "message_id": {
+        "type": "integer",
+        "description": "Telegram message ID"
+      },
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO timestamp of the message"
+      },
+      "hash_id": {
+        "type": "string",
+        "description": "Unique hash identifier for deduplication",
+        "pattern": "^[a-f0-9]{16}$"
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["low", "medium", "high", "critical"],
+        "description": "Severity level of the breach"
+      },
+      "affected_count": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Number of affected records"
+      },
+      "data_types": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["emails", "passwords", "personal_info", "financial", "other"]
+        },
+        "description": "Types of data exposed"
+      }
+    },
+    "additionalProperties": false
+  }
+} 

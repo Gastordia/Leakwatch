@@ -1,0 +1,88 @@
+# Telegram Fetcher Configuration
+telegram:
+  api_id: ${API_ID}
+  api_hash: ${API_HASH}
+  session_base64: ${TELEGRAM_SESSION_BASE64}
+  channel: breachdetector
+  message_limit: 5000
+
+# Data Management
+data:
+  max_file_size_mb: 50
+  max_messages: 10000
+  backup_enabled: true
+  backup_retention_days: 7
+  quality_filtering: true
+  min_breach_score: 1
+
+# Retry Configuration
+retry:
+  attempts: 3
+  delay_seconds: 60
+  backoff_multiplier: 2
+
+# Logging
+logging:
+  level: INFO
+  file: telegram_fetcher.log
+  max_size_mb: 10
+  backup_count: 5
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+# Security
+security:
+  session_timeout_hours: 24
+  max_concurrent_requests: 5
+  rate_limit_delay: 1
+  secure_file_permissions: true
+  input_validation: true
+  max_content_length: 2000
+  max_source_length: 500
+
+# Monitoring
+monitoring:
+  health_check_enabled: true
+  metrics_enabled: true
+  alert_on_failure: true
+  performance_monitoring: true
+
+# Data Quality
+quality:
+  breach_indicators:
+    - leak
+    - breach
+    - hack
+    - compromise
+    - exposed
+    - stolen
+    - database
+    - credentials
+    - password
+    - email
+    - personal data
+    - user data
+    - customer data
+    - financial data
+    - credit card
+    - ssn
+    - social security
+  
+  spam_indicators:
+    - buy
+    - sell
+    - offer
+    - discount
+    - promotion
+    - service
+    - tool
+    - software
+    - review
+    - rating
+    - backlink
+    - seo
+    - marketing
+    - advertisement
+    - sponsored
+    - deal
+    - sale
+    - free trial 

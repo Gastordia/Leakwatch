@@ -1,0 +1,178 @@
+name: Full History Fetch (One-Time)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      confirm:
+        description: 'Type "YES" to confirm you want to fetch entire channel history'
+        required: true
+        default: 'NO'
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  full-history-fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # 2 hours timeout for large channels
+    
+    steps:
+    - name: Check confirmation
+      run: |
+        if [ "${{ github.event.inputs.confirm }}" != "YES" ]; then
+          echo "❌ Confirmation required. Please type 'YES' to proceed."
+          exit 1
+        fi
+        echo "✅ Confirmation received. Starting full history fetch..."
+        
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements_improved.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements_improved.txt
+        
+    - name: Validate configuration
+      run: |
+        python -c "
+        import yaml
+        with open('full_fetch_config.yaml', 'r') as f:
+            config = yaml.safe_load(f)
+        print('✅ Full fetch configuration validated')
+        "
+        
+    - name: Create backup of existing data
+      run: |
+        if [ -f "data.json" ]; then
+          cp data.json "data_backup_before_full_fetch_$(date +%Y%m%d_%H%M%S).json"
+          echo "✅ Created backup of existing data.json"
+        else
+          echo "ℹ️  No existing data.json found"
+        fi
+        
+    - name: Run full history fetch
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        API_HASH: ${{ secrets.API_HASH }}
+        TELEGRAM_SESSION_BASE64: ${{ secrets.TELEGRAM_SESSION_BASE64 }}
+        CHANNEL: breachdetector
+      run: |
+        echo "🚀 Starting full history fetch..."
+        echo "This may take 30-60 minutes depending on channel size..."
+        python fetch_entire_history.py
+        
+    - name: Validate data structure
+      run: |
+        python -c "
+        import json
+        import jsonschema
+        from jsonschema import validate
+        
+        # Load schema
+        with open('schema.json', 'r') as f:
+            schema = json.load(f)
+            
+        # Load data
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+            
+        # Validate
+        validate(instance=data, schema=schema)
+        print(f'✅ Data validated: {len(data)} records')
+        "
+        
+    - name: Generate summary report
+      run: |
+        python -c "
+        import json
+        from datetime import datetime
+        
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+        
+        # Analyze data
+        sources = {}
+        types = {}
+        morocco_related = 0
+        
+        for entry in data:
+            source = entry.get('Source', 'Unknown')
+            breach_type = entry.get('Type', 'Unknown')
+            content = entry.get('Content', '').lower()
+            
+            sources[source] = sources.get(source, 0) + 1
+            types[breach_type] = types.get(breach_type, 0) + 1
+            
+            # Check for Morocco-related content
+            morocco_keywords = ['morocco', 'moroccan', 'ma', 'casablanca', 'rabat', 'marrakech']
+            if any(keyword in content for keyword in morocco_keywords):
+                morocco_related += 1
+        
+        print('📊 Full History Fetch Summary:')
+        print(f'   Total records: {len(data)}')
+        print(f'   Morocco-related: {morocco_related}')
+        print(f'   Unique sources: {len(sources)}')
+        print(f'   Breach types: {len(types)}')
+        print()
+        print('Top sources:')
+        for source, count in sorted(sources.items(), key=lambda x: x[1], reverse=True)[:5]:
+            print(f'   {source}: {count}')
+        print()
+        print('Breach types:')
+        for btype, count in sorted(types.items(), key=lambda x: x[1], reverse=True):
+            print(f'   {btype}: {count}')
+        "
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data.json
+        git add data_backup_*.json
+        git commit -m "Full history fetch completed - $(date +%Y-%m-%d)"
+        git push
+        
+    - name: Upload logs and backups
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: full-history-fetch-artifacts
+        path: |
+          full_history_fetch.log
+          data_backup_*.json
+        retention-days: 30
+        
+    - name: Notify completion
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        text: "Full history fetch completed successfully! Check the repository for updated data."
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+    - name: Notify failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        text: "Full history fetch failed! Check the workflow logs for details."
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
